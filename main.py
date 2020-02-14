@@ -1,5 +1,6 @@
 import time
 import math
+import os # used to access files, more specifically, to delete  mp3 files in our case
 import sys # will be needed for sys.exit() to quit program whenever we want
 from signal import signal, SIGINT # needed to catch control-c, SIGINT termination
 
@@ -8,6 +9,7 @@ import speechToText as STT # imports speechToText.py, which handles the speech t
 import textToSpeech as TTS # imports textToSpeech.py, which handles the text to speec output
 import rnn as RNN # imports our rnn.py script to be used as our trained model
 import handle_data as HD # imports all of our custom  functions written to handle the json data file for training
+
 
 def sigint_handler(signal, frame): # implements the sigint handler to terminate gracefully
     print("\n-={ SIGINT (CONTROL-C) caught }=-")
@@ -31,13 +33,22 @@ def loop_convo(): # handles the input, prediction, and output
 
         # increment file number (mp3 file name as a number)
         file_number+=1
+
+def clean_up(): # deletes all .mp3 files in this directory
+    for file in os.listdir("."):
+        if file.endswith(".mp3"):
+            os.remove(file)
     
 if __name__ == '__main__':
-    print("Welcome to Talking Buddy!")
-    signal(SIGINT, sigint_handler)
-    HD.load_data("./data.json") # load the data with the data file in the same directory as this main.py
-    loop_convo() # loop conversation with user // quits the program when user says "quit conversation"
+    clean_up() # clean up all saved mp3s (outputs) at beginning, so this run's recordings are saved until next run
     
+    print("Welcome to Talking Buddy!")
+    TTS.text_to_speech("Welcome to Talking Buddy!", "start")
+    
+    signal(SIGINT, sigint_handler)# sets up sigint handler for graceful terrmination
+
+    HD.load_data("./data.json") # load the data with the data file in the same directory as this main.py
+ #   loop_convo() # loop conversation with user // quits the program when user says "quit conversation"
 
 
 
