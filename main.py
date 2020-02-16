@@ -35,9 +35,12 @@ def loop_convo(): # handles the input, prediction, and output
         file_number+=1
 
 def clean_up(): # deletes all .mp3 files in this directory
-    for file in os.listdir("."):
+    for file in os.listdir("./sounds_data/"):
         if file.endswith(".mp3"):
-            os.remove(file)
+            try:
+                os.remove("./sounds_data/" + file)
+            except:
+                print("removal didnt work")
     
 if __name__ == '__main__':
     clean_up() # clean up all saved mp3s (outputs) at beginning, so this run's recordings are saved until next run
@@ -46,8 +49,9 @@ if __name__ == '__main__':
     TTS.text_to_speech("Welcome to Talking Buddy!", "start")
     
     signal(SIGINT, sigint_handler)# sets up sigint handler for graceful terrmination
-
-    HD.load_data("./data.json") # load the data with the data file in the same directory as this main.py
+    
+    HD.handle_data("./data/data.json") # load the data with the data file in the same directory as this main.py
+    
  #   loop_convo() # loop conversation with user // quits the program when user says "quit conversation"
 
 
