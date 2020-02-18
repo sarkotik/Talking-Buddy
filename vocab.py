@@ -13,7 +13,7 @@ class Voc:
         self.num_words = 3  #  starts at 3 b/c SOS, EOS, PAD are already in it // will be used as the index of each word in wordToIndex
 
     def addSentence(self, sentence): # adds by sentence into our vocab by calling addWord() on each word 
-        for word in sentence.split(' '):
+        for word in sentence.split(' '): # calls addWord() on each word to add to our 3 dictionary elms
             self.addWord(word)
 
     def addWord(self, word): # adds word to this vocabulary class
@@ -29,7 +29,24 @@ class Voc:
         if self.trimmed: # already trimmed
             return
         self.trimmed = True # the vocab is now trimmed after this function
+        
+        # the extra data structure (memory) and iteration (time) below are needed in order to "reset" index upon removal
+        keep_words = [] # just need a list, we are remaking each dictionary elm of our class
+        for k, v in self.wordToCount.items():
+            if v >= min_count:
+                keep_words.append(k)
+                
+        # clear all 3 dictionaries
+        self.wordToIndex.clear()
+        self.wordToCount.clear()
+        self.indexToWord = {PAD_token: "PAD", SOS_token: "SOS", EOS_token: "EOS"}
+        self.num_words = 3  # reset index tracker to 3 (default)
+            
+        # remake all 3 dictionaries by calling addWord() on each word we want to keep
+        for w in keep_words:
+            self.addWord(w)
 
+        '''  # cannot do this because we need to reset the indexes upon removal
         # now iterate through each key and check its count in wordToCount dictionary
         for k, v in self.wordToCount.items():
             if v < min_count:
@@ -38,6 +55,8 @@ class Voc:
                 self.indexToWord.pop(self.wordToIndex.pop(k)) # second pop pops by word and returns index to first pop which pops by index
                 self.num_words -= 1 # decrement index tracker by 1
                 
+        '''
+        
         
             
             
