@@ -10,7 +10,6 @@ import textToSpeech as TTS # imports textToSpeech.py, which handles the text to 
 import rnn as RNN # imports our rnn.py script to be used as our trained model
 import handle_data as HD # imports all of our custom  functions written to handle the json data file for training
 
-
 def sigint_handler(signal, frame): # implements the sigint handler to terminate gracefully
     print("\n-={ SIGINT (CONTROL-C) caught }=-")
     sys.exit(0)
@@ -50,8 +49,13 @@ if __name__ == '__main__':
     
     signal(SIGINT, sigint_handler)# sets up sigint handler for graceful terrmination
     
-    HD.handle_data("./data/data.json") # load the data with the data file in the same directory as this main.py
+    pairs = HD.handle_data("./data/data.json") # load the data with the data file in the same directory as this main.py
+    # pairs is the list of all pairs of sentences from the conversations
+
+
+    # now, build the vocabulary using our Vocabulary class in our vocab.py module
     
+
  #   loop_convo() # loop conversation with user // quits the program when user says "quit conversation"
 
 
