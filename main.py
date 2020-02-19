@@ -49,9 +49,10 @@ if __name__ == '__main__':
     
     signal(SIGINT, sigint_handler)# sets up sigint handler for graceful terrmination
     
-    pairs = HD.handle_data("./data/data.json") # load the data with the data file in the same directory as this main.py
-    # pairs is the list of all pairs of sentences from the conversations
-
+    voc, pairs = HD.handle_data("./data/data.json") # load the data with the data file in the same directory as this main.py
+    # now have built vocab and refined list of pairs
+    print("\nnumber of pairs (AFTER TRIM): " + str(len(pairs)))
+    print("number of unique words (AFTER TRIM): " + str(voc.num_words))
 
     # now, build the vocabulary using our Vocabulary class in our vocab.py module
     
