@@ -88,7 +88,7 @@ class Attn(nn.Module):
             raise ValueError(self.method, "is not one of the 3 allowed methods (dot, general, concat)")
         
         # transpose the max_length and batch_size dimensions
-        attn_weights = attn_weights.t()
+        attn_weights = attn_weights.t() # flip matrix across the line y = -x
 
         # return the result, normalized with a softmax function in order for probability conversions (0-1)
         return F.softmax(attn_weightts,  dim = 1).unsqueeze(1)
