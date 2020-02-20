@@ -10,7 +10,6 @@ import textToSpeech as TTS # imports textToSpeech.py, which handles the text to 
 import rnn as RNN # imports our rnn.py script to be used as our trained model
 import handle_data as HD # imports all of our custom  functions written to handle the json data file for training
 
-
 def sigint_handler(signal, frame): # implements the sigint handler to terminate gracefully
     print("\n-={ SIGINT (CONTROL-C) caught }=-")
     sys.exit(0)
@@ -35,9 +34,12 @@ def loop_convo(): # handles the input, prediction, and output
         file_number+=1
 
 def clean_up(): # deletes all .mp3 files in this directory
-    for file in os.listdir("."):
+    for file in os.listdir("./sounds_data/"):
         if file.endswith(".mp3"):
-            os.remove(file)
+            try:
+                os.remove("./sounds_data/" + file)
+            except:
+                print("removal didnt work")
     
 if __name__ == '__main__':
     clean_up() # clean up all saved mp3s (outputs) at beginning, so this run's recordings are saved until next run
@@ -46,8 +48,15 @@ if __name__ == '__main__':
     TTS.text_to_speech("Welcome to Talking Buddy!", "start")
     
     signal(SIGINT, sigint_handler)# sets up sigint handler for graceful terrmination
+    
+    voc, pairs = HD.handle_data("./data/data.json") # load the data with the data file in the same directory as this main.py
+    # now have built vocab and refined list of pairs
+    print("\nnumber of pairs (AFTER TRIM): " + str(len(pairs)))
+    print("number of unique words (AFTER TRIM): " + str(voc.num_words))
 
-    HD.load_data("./data.json") # load the data with the data file in the same directory as this main.py
+    # now, build the vocabulary using our Vocabulary class in our vocab.py module
+    
+
  #   loop_convo() # loop conversation with user // quits the program when user says "quit conversation"
 
 
