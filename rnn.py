@@ -1,4 +1,4 @@
-##will handle train, predict, our nn model, etc
+# will contain our encoder rnn and decoder rnn classes + train and predict functions
 from io import open
 import os
 import random
@@ -7,32 +7,41 @@ import math
 import torch.nn as nn
 import torchvision as tv
 
-# our RNN model
-class RNN(nn.Module):
-    def __init__(self, input_size, hideden_size, output_size):
-        super(RNN, self).__init__()
+# our encoder RNN model
+class EncoderRNN(nn.Module):
+    def __init__(self, hidden_size, embedding, n_layers = 1, dropout = 0):
+        super(EncoderRNN, self).__init__()
+        # initialize our encoder rnn's attributes to its parameters upon initialization
+        self.n_layers = n_layers
+        self.embedding = embedding
+        self.hidden_size = hidden_size
+        
+        # initialize our GRU. input_size is set to hidden_size because our input size is a word embedding with # of features == hidden_size
+        self.gru = nn.GRU()
 
-        # declaration of the RNN's attributes
-        self.hidden_size = hidden_size # sets up hidden size arg as a self attribute
-        self.i2h = nn.Linear(input_size + hidden_size, hidden_size) # goes to hidden and back to original hidden
-        self.i2o = nn.Linear(input_size + hidden_size, output_size) # goes to softmax and then output
-        self.softmax = nn.LogSoftmax(dim=1) # sets up softmax layer to get a score  between  0 an 1 for probability reasonings
+    # side note - defining a forward method for a NN allows us to call backward() to compute gradients
+    def forward(self, input_seq, input_lengths, hidden = None):
+        # first, convert word indexes to embeddings
+        embedded =  self.embedding(input_seq)
+        
+        # pack padded batch of sequences to be fed into this RNN by calling pack_padded_sequence()
+        packed = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
 
-    def forward(self, input, hidden):
-        # Put the computation for forward pass here
-        combined = torch.cat((input, hidden), 1) # sets up the combined layer of input and hidden, before i2o or i2h
-                
-        hidden = self.i2h(combined) # sends combined through i2h, going to be sent back to hidden
-        output = self.i2o(combined) # sends combined through i20, producing output
-        output = self.softmax(output) # takes output and passes through softmax before final return
-        return output, hidden
+        # now, forward pass this packed data through the defined GRU
+        outputs, hidden = self.gru(packed, hidden)  # gru returns outputs and hidden state to be fed into the next time step
+
+        # unpack padding by calling pad_packed_sequence
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs)
+
+        # sum together the bidirectional GRU outputs
+        outputs = outputs[:, :, :self.hidden_size] + outputs[:, :, self.hidden_size:]
+
+        # return the final output and hidden state
+        return outputs, hidden
+        
             
-    def initHidden(self):
-        return torch.zeros(1, self.hidden_size)
 
-
-
-
+# our decoderRNN model
 
 
 
