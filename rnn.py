@@ -7,6 +7,7 @@ import math
 import torch.nn as nn
 import torchvision as tv
 
+
 # our encoder RNN model
 class EncoderRNN(nn.Module):
     def __init__(self, hidden_size, embedding, n_layers = 1, dropout = 0):
@@ -38,6 +39,7 @@ class EncoderRNN(nn.Module):
 
         # return the final output and hidden state
         return outputs, hidden
+
 
 # our Luong attention layer -> implements "Global Attention"
 # read https://blog.floydhub.com/attention-mechanism/#luong-att for more info on attention layers used to prevent information loss
@@ -92,13 +94,76 @@ class Attn(nn.Module):
 
         # return the result, normalized with a softmax function in order for probability conversions (0-1)
         return F.softmax(attn_weightts,  dim = 1).unsqueeze(1)
+
         
-# our decoderRNN model
+# our decoderRNN model which implements our attention layer class above
+# forward pass will be through a unidirectional GRU, in comparison to our encoder rnn's biidirectional GRU's
+class LuongAttnDecoderRNN(nn.Module):
+    def __init__(self, attn_model, embedding, hidden_size, output_size, n_layers = 1, dropout = 0.1):
+        super(LuongAttnDecoderRNN,   self).__init__()
 
+        # initialize our decoder rnn's attributes to its parameters upon initialization
+        self.attn_model = attn_model
+        self.hidden_size = hidden_size
+        self.output_size = output_size
+        self.n_layers = n_layers
+        self.dropout = dropout
 
+        # define our decoder rnn's layers
+        self.embedding = embedding
+        self.embedding_dropout = nn.Dropout(dropout)
+        # initialize our GRU. input_size is set to hidden_size because our input size is a word embedding with # of features == hidden_size
+        self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout = (o if n_layers == 1 else dropout)) 
+        self.concat = nn.Linear(hidden_size * 2, hidden_size)
+        self.out = nn.Linear(hidden_size, output_size) # ouput layer 
 
-# train function
+        self.attn = Attn(attn_model, hidden_size) # creates an instance of our attention layer class above
 
+    # we will run this one step (word) at a time
+    def forward(self, input_step, last_hidden, encoder_outputs):
+        # step 1 -> get embedding of the current input word
+        embedded = self.embedding(input_step)
+        embedded = self.embedding_drouput(embedded)
+
+        # step 2 -> forward pass through unidirectional GRU, get final output and hidden state from GRU
+        rnn_output, hidden = self.gru(embedded, last_hidden)
+
+        # step 3 -> calculate the attention weights from the current GRU output
+        # In order to calculate attention weights, Luong's Global Attention uses the hidden state of the decoder from the current time step only
+        attn_weights = self.attn(rnn_output, encoder_outputs) # calculates attn weights with the current decoder hidden state and 
+
+        # step 4 -> multiple the attention weights to encoder outputs in order to get a new "weighted sum" context vector
+        context_vector = attn_weights.bmm(encoder_outputs.transpose(0, 1))
+
+        # step 5 -> concatenate weighted context vector and GRU output using Luong eq 5
+        rnn_output = rnn_output.squeeze(0)
+        context_vector = context_vector.squeeze(1)
+        concat_input = torch.cat((rnn_output, context) , 1)
+        concat_output = torch.tanh(self.concat(concat_input))
+
+        # step 6 -> predict the next word in the sequence using Luong eq 6
+        output = self.out(concat_output)
+        output = F.softmax(output, dim=1)
+
+        # finally, return the output and the final hidden state
+        return output, hidden
+        
+
+        
+# our single training function
+# we set the max length to 11 because we are chilling with inputs of <=10 chars
+def train(input_variable, lengths, target_variable, mask, max_target_len, encoder, decoder, embedding, encoder_optimizer, decoder_optimizer, batch_size, clip, max_length = 11):
+    # zero gradients
+    encoder_optimizer.zero_grad()
+    decoder_optimizer.zero_grad()
+
+    # set device options
+    input_variable = input_variable.to(device)
+    lengths = lengths.to(device)
+    target_variable = target_variable.to(device)
+    mask = mask.to(device)
+
+    # NOT DONE YET ...
 
 
 
