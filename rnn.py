@@ -38,9 +38,61 @@ class EncoderRNN(nn.Module):
 
         # return the final output and hidden state
         return outputs, hidden
-        
-            
 
+# our Luong attention layer -> implements "Global Attention"
+# read https://blog.floydhub.com/attention-mechanism/#luong-att for more info on attention layers used to prevent information loss
+# Luong's global attention takes the last context vector and concatenates them with the last output vector as an input to RNN
+# the current context vector will be passed to the next time step
+# Differences from Bahdanau's Attention Mechanism -> need all of the encoder's hidden states and just the hidden state of the decoder from the current time step only
+class Attn(nn.Module):
+    def __init__(self, method, hidden_size):
+        super(Attn, self).__init__()
+
+        # three different ways that the alignment scoring function is defined -> dot, general, and concat
+        self.method = method
+        if self.method not in ['dot', 'general', 'concat']: # error check for the three allowed methods
+            raise ValueError(self.method, "is not one of the 3 allowed methods (dot, general, concat)")
+        self.hidden_size = hidden_size
+        if self.method == 'general': # general method case
+            self.attn = nn.Linear(self.hidden_size, hidden_size)
+        elif self.method == 'concat': # concat method case
+            self.attn = nn.Linear(self.hidden_size * 2, hidden_size)
+            self.v = nn.Parameter(torch.FloatTensor(hidden_size))
+
+    def dot_score(self, hidden, encoder_output): # simplest of the three functions 
+        # produce the alignment score by multiplying the hidden states of the encoder and the hidden state of the decoder
+        # Alignment_Score = H_e *  H_d
+        return torch.sum(hidden * encoder_output, dim = 2)
+
+    def general_score(self, hidden, encoder_output): # similar to dot function, except a weight matrix is added into the equation
+        # Alignment_Score = W(H_e *  H_d)
+        attn_weights = self.attn(encoder_output)
+        return torch.sum(hidden * attn_weights, dim = 2)
+        
+    def concat_score(self, hidden, encoder_output): # similar to the way alignment scores are calculated in Bahdanau's Attention Mechanism
+        # the decoder hidden state is added to the encoder's hidden states
+        # Alignment_Score = W * tanh(W_combined(H_e + H_d))
+        attn_weights = self.attn(torch.cat((hidden.expand(encoder_output.size(0), -1, -1), encoder_output), 2)).tanh()
+        return torch.sum(self.v * attn_weights, dim = 2)
+    
+    # defining forward allows us to call backward to compute gradients of a calculation
+    def forward(self, hidden, encoder_outputs):
+        # calculate the attention weights based on the given method (3 possible)
+        if self.method == "general":
+            attn_weights = self.general_score(hidden, encoder_outputs)
+        elif self.method == "concat":
+            attn_weights = self.concat_score(hidden, encoder_outputs)
+        elif self.method == "dot":
+            attn_weights = self.dot_score(hidden, encoder_outputs)
+        else: # extra safeguard
+            raise ValueError(self.method, "is not one of the 3 allowed methods (dot, general, concat)")
+        
+        # transpose the max_length and batch_size dimensions
+        attn_weights = attn_weights.t()
+
+        # return the result, normalized with a softmax function in order for probability conversions (0-1)
+        return F.softmax(attn_weightts,  dim = 1).unsqueeze(1)
+        
 # our decoderRNN model
 
 
