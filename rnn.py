@@ -17,7 +17,7 @@ class EncoderRNN(nn.Module):
         self.hidden_size = hidden_size
         
         # initialize our GRU. input_size is set to hidden_size because our input size is a word embedding with # of features == hidden_size
-        self.gru = nn.GRU()
+        self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout = (0 if n_layers == 1 else dropout), bidirectional = True)
 
     # side note - defining a forward method for a NN allows us to call backward() to compute gradients
     def forward(self, input_seq, input_lengths, hidden = None):
