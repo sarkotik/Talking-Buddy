@@ -25,32 +25,6 @@ def print_json_data(data): # type of data is a list of dictionaries
         
         print("-------------------------------------------------------------------------------------------------------------------\n-------------------------------------------------------------------------------------------------------------------\n")
 
-#create formatte data file
-def createFormattedDataFile(data):
-    # the formatted data file
-    f = open("./data/formatted data file.txt", "w")
-    # question and answer pair
-    qa_pairs = []
-    # iterate through the data file
-    for d in data:
-        # get the element of the dialog
-        dialog = d["dialog"]
-        # construct the question and answer pair
-        for i in range(len(dialog)-1):
-            # the former sentence should be question
-            question = dialog[i].get("text")
-            # the latter sentence should be answer
-            answer = dialog[i+1].get("text")
-            qa_pairs.append([question, answer])
-    # iterate through the question and answer pairs
-    for pair in qa_pairs:
-        for sentence in pair:
-            # partition the question and answer
-            f.write(sentence+"\t\t")
-        # get a new line
-        f.write("\n")
-    f.close()
-
 
 ### -------- EXTRACT SENTENCE PAIRS FROM DATA -------- ### 
 def extract_sentence_pairs(data): # extract sentence pairs
