@@ -6,15 +6,15 @@ import torch
 
 # change the word in the sentence to id
 def indexesFromSentence(voc, sentence):
-    return [voc.word2index[word] for word in sentence.split(' ')] + [vocab.EOS_token]
+    return [voc.wordToindex[word] for word in sentence.split(' ')] + [vocab.EOS_token]
 
 """
 padding the list with PAD_token.
 @l: the list of lists
 @return: the list of lists which is after padding. the size is (len(l), the max length of lists)
 """
-def zeroPadding(l, fillValue=vocab.PAD_token):
-    return list(itertools.zip_longest(*l, fillValue=fillValue))
+def zeroPadding(l, fillvalue=vocab.PAD_token):
+    return list(itertools.zip_longest(*l, fillvalue=fillvalue))
 
 """
 convert the value in the lists of list to binary
@@ -28,11 +28,11 @@ def binaryMatrix(l, padding = vocab.PAD_token):
     # iterate the l
     for i in range(len(l)):
         # create a new row in the binary matrix
-        binaryMatrix[i] = []
+        binaryMatrix.append([])
         # iterate the No.i element in l
         for token in l[i]:
             # the value is padding, assign 0
-            if token == vocab.PAD_token:
+            if token == padding:
                 binaryMatrix[i].append(0)
             # the value is not padding, assign 1
             else:
@@ -68,7 +68,7 @@ def outputVar(l, voc):
     return padVar, mask, max_target_len
 
 # Returns all items for a given batch of pairs
-def batch2TrainData(voc, pair_batch):
+def batchToTrainData(voc, pair_batch):
     # sort the sentences according to the length of each sentence
     pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
     # initiate the input and output list
