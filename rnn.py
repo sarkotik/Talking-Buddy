@@ -14,7 +14,7 @@ class EncoderRNN(nn.Module):
         super(EncoderRNN, self).__init__()
         # initialize our encoder rnn's attributes to its parameters upon initialization
         self.n_layers = n_layers
-        self.embedding = embedding
+        self.embedding = embedding # used to create embeddings from input words
         self.hidden_size = hidden_size
         
         # initialize our GRU. input_size is set to hidden_size because our input size is a word embedding with # of features == hidden_size
@@ -22,19 +22,19 @@ class EncoderRNN(nn.Module):
 
     # side note - defining a forward method for a NN allows us to call backward() to compute gradients
     def forward(self, input_seq, input_lengths, hidden = None):
-        # first, convert word indexes to embeddings
+        # step 1 -> convert word indexes to embeddings
         embedded =  self.embedding(input_seq)
         
-        # pack padded batch of sequences to be fed into this RNN by calling pack_padded_sequence()
+        # step 2 -> pack padded batch of sequences to be fed into this RNN by calling pack_padded_sequence()
         packed = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
 
-        # now, forward pass this packed data through the defined GRU
+        # step 3 -> forward pass this packed data through the defined GRU
         outputs, hidden = self.gru(packed, hidden)  # gru returns outputs and hidden state to be fed into the next time step
 
-        # unpack padding by calling pad_packed_sequence
+        # step 4 -> unpack padding by calling pad_packed_sequence
         outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs)
 
-        # sum together the bidirectional GRU outputs
+        # step 5 -> sum together the bidirectional GRU outputs
         outputs = outputs[:, :, :self.hidden_size] + outputs[:, :, self.hidden_size:]
 
         # return the final output and hidden state
@@ -80,17 +80,17 @@ class Attn(nn.Module):
     # defining forward allows us to call backward to compute gradients of a calculation
     def forward(self, hidden, encoder_outputs):
         # calculate the attention weights based on the given method (3 possible)
-        if self.method == "general":
+        if self.method == "general": # general method
             attn_weights = self.general_score(hidden, encoder_outputs)
-        elif self.method == "concat":
+        elif self.method == "concat": # concat method
             attn_weights = self.concat_score(hidden, encoder_outputs)
-        elif self.method == "dot":
+        elif self.method == "dot": # dot method
             attn_weights = self.dot_score(hidden, encoder_outputs)
         else: # extra safeguard
             raise ValueError(self.method, "is not one of the 3 allowed methods (dot, general, concat)")
         
         # transpose the max_length and batch_size dimensions
-        attn_weights = attn_weights.t() # flip matrix across the line y = -x
+        attn_weights = attn_weights.t() # flip matrix across the line y = -x (\)
 
         # return the result, normalized with a softmax function in order for probability conversions (0-1)
         return F.softmax(attn_weightts,  dim = 1).unsqueeze(1)
@@ -103,14 +103,14 @@ class LuongAttnDecoderRNN(nn.Module):
         super(LuongAttnDecoderRNN,   self).__init__()
 
         # initialize our decoder rnn's attributes to its parameters upon initialization
-        self.attn_model = attn_model
+        self.attn_model = attn_model # will be one of three things -> dot, concat, and general
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.n_layers = n_layers
         self.dropout = dropout
 
         # define our decoder rnn's layers
-        self.embedding = embedding
+        self.embedding = embedding  # used to embed input words
         self.embedding_dropout = nn.Dropout(dropout)
         # initialize our GRU. input_size is set to hidden_size because our input size is a word embedding with # of features == hidden_size
         self.gru = nn.GRU(hidden_size, hidden_size, n_layers, dropout = (o if n_layers == 1 else dropout)) 
@@ -143,7 +143,7 @@ class LuongAttnDecoderRNN(nn.Module):
 
         # step 6 -> predict the next word in the sequence using Luong eq 6
         output = self.out(concat_output)
-        output = F.softmax(output, dim=1)
+        output = F.softmax(output, dim=1) # use softmax function in order to normalize values to probabilistic distribution (0-1)
 
         # finally, return the output and the final hidden state
         return output, hidden
