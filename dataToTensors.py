@@ -1,13 +1,12 @@
 # contains functions to be used to convert our data to tensors to be fed into our rnns
 import itertools
-
 import vocab
+import torch
 
 
 # change the word in the sentence to id
 def indexesFromSentence(voc, sentence):
-    return [voc.indexToWord[word] for word in sentence.split(' ')] + [vocab.EOS_token]
-
+    return [voc.word2index[word] for word in sentence.split(' ')] + [vocab.EOS_token]
 
 """
 padding the list with PAD_token.
@@ -39,3 +38,48 @@ def binaryMatrix(l, padding = vocab.PAD_token):
             else:
                 binaryMatrix[i].append(1)
     return binaryMatrix
+
+# Returns padded input sequence tensor and lengths
+def inputVar(l, voc):
+    # convert the sentences to lists of ids
+    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in l]
+    # the element in the lengths list is the length for each sentence
+    lengths = torch.tensor([len(indexes) for indexes in indexes_batch])
+    # pad sentences to be the same length
+    padList = zeroPadding(indexes_batch)
+    # convert padList to the tensor
+    padVar = torch.LongTensor(padList)
+    return padVar, lengths
+
+# Returns padded target sequence tensor, padding mask, and max target length
+def outputVar(l, voc):
+    # convert the sentences to lists of ids
+    indexes_batch = [indexesFromSentence(voc, sentence) for sentence in l]
+    # find the max length for all the sentences
+    max_target_len = max([len(indexes) for indexes in indexes_batch])
+    # pad sentences to be the same length
+    padList = zeroPadding(indexes_batch)
+    # use binaryMatrix to determine whether the element is padded
+    mask = binaryMatrix(padList)
+    # use the ByteTensor to convert the element matrix to be like 1,0
+    mask = torch.ByteTensor(mask)
+    # convert padList to the tensor
+    padVar = torch.LongTensor(padList)
+    return padVar, mask, max_target_len
+
+# Returns all items for a given batch of pairs
+def batch2TrainData(voc, pair_batch):
+    # sort the sentences according to the length of each sentence
+    pair_batch.sort(key=lambda x: len(x[0].split(" ")), reverse=True)
+    # initiate the input and output list
+    input_batch, output_batch = [], []
+    for pair in pair_batch:
+        # add first element of a pair(like a question) to the input
+        input_batch.append(pair[0])
+        # add second element of a pair(like a answer) to the output
+        output_batch.append(pair[1])
+    # process the input to be suitable for the model
+    inp, lengths = inputVar(input_batch, voc)
+    # process the output to be suitable for the model
+    output, mask, max_target_len = outputVar(output_batch, voc)
+    return inp, lengths, output, mask, max_target_len
