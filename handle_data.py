@@ -94,7 +94,7 @@ def handle_data(filename): # puts all of our functions together in handling data
     print("\nLoading Data...\n")
     # first, load our json data into our process
     data = load_data(filename)
-    #print_json_data(data) # custom function written to actually be able to read the json file lol
+    print_json_data(data) # custom function written to actually be able to read the json file lol
 
     print("Reformatting Data into Sentence Pairs...\n")
     # extract sentence pairs from data and normalize them
