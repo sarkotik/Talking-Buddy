@@ -4,17 +4,11 @@ import os
 import random
 import time
 import math
-
-import torch
 import torch.nn as nn
 import torchvision as tv
 
 
 # our encoder RNN model
-import dataToTensors
-import handle_data
-
-
 class EncoderRNN(nn.Module):
     def __init__(self, hidden_size, embedding, n_layers = 1, dropout = 0):
         super(EncoderRNN, self).__init__()
@@ -171,26 +165,8 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, encode
 
     # NOT DONE YET ...
 
-# evaluate function
-# evaluate the response of chatbot
-def evaluate(encoder, decoder, searcher, voc, sentence, max_length=handle_data.MAX_LENGTH):
-    # change a batch of input sentence to index
-    indexs_batch = [dataToTensors.indexsFormSentence(voc, sentence)]
-    # create lengths tensor
-    lengths = torch.tensor(len(indexs) for indexs in indexs_batch)
-    # transpose the dimensions
-    input_batch = torch.LongTensor(indexs_batch).transpose(0,1)
-    # use approriate device
-    input_batch = indexs_batch.to(device)
-    lengths = lengths.to(device)
-    # decode sentence by searcher
-    tokens, score = searcher(indexs_batch, lengths, max_length)
-    # change index to word
-    decoded_words = [voc.indexToWord[token.item()] for token in tokens]
-    return decoded_words
 
 
 # predict function
-
 
 
