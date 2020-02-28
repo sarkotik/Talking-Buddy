@@ -9,6 +9,9 @@ import torchvision as tv
 
 
 # our encoder RNN model
+from handle_data import normalizeString
+
+
 class EncoderRNN(nn.Module):
     def __init__(self, hidden_size, embedding, n_layers = 1, dropout = 0):
         super(EncoderRNN, self).__init__()
@@ -165,25 +168,32 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, encode
 
     # NOT DONE YET ...
 
-# evaluate function
-# evaluate the response of chatbot
-def evaluate(encoder, decoder, searcher, voc, sentence, max_length=handle_data.MAX_LENGTH):
-    # change a batch of input sentence to index
-    indexs_batch = [dataToTensors.indexsFormSentence(voc, sentence)]
-    # create lengths tensor
-    lengths = torch.tensor(len(indexs) for indexs in indexs_batch)
-    # transpose the dimensions
-    input_batch = torch.LongTensor(indexs_batch).transpose(0,1)
-    # use approriate device
-    input_batch = indexs_batch.to(device)
-    lengths = lengths.to(device)
-    # decode sentence by searcher
-    tokens, score = searcher(indexs_batch, lengths, max_length)
-    # change index to word
-    decoded_words = [voc.indexToWord[token.item()] for token in tokens]
-    return decoded_words
 
 
 # predict function
 
 
+#evaluateInput function
+def evaluateInput(encoder, decoder, searcher, voc):
+    input_sentence = ''
+    while(1):
+        try:
+            # get the input from the user's input
+            input_sentence = input('> ')
+            # test if exit the program
+            if input_sentence == 'q' or input_sentence == 'quit': break
+            # normalize the string which takes a string and lowercases, trims, and removes non-letter chars
+            input_sentence = normalizeString(input_sentence)
+            # generate the output through the evaluate function
+            output_words = evaluate(encoder, decoder, searcher, voc, input_sentence)
+            # get rid of the content which is after the 'EOS'
+            words = []
+            for word in output_words:
+                if word == 'EOS':
+                    break
+                elif word != 'PAD':
+                    words.append(word)
+            print('Bot:', ' '.join(words))
+
+        except KeyError:
+            print("Error: Encountered unknown word.")
